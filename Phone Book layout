@@ -1,0 +1,243 @@
+@functions{
+
+    protected EngineRecord _user = null;
+    
+    public override void InitializePage() {
+        base.InitializePage();
+        string myid = null;
+        PageData["Access"] = "ReadOnly";
+        if (Request.QueryString["logout"] == "logout") {
+            BRT.Logout(tokenName:"phonebook");
+            BRT.Logout();    
+            Response.Redirect("/phonebook");
+        }
+        else
+        {
+            _user = BRT.UserRecord(viewId:"People", fields: new[] {"FirstName","LastName","PhoneBookDetails"},condition:"<Eq FieldId=\"CanAccessPhoneBook\" Value=\"true\"/>",tokenName:"phonebook");
+            
+            if ( _user != null){
+                PageData["Name"] =  _user.GetString("FirstName");
+                PageData["MyId"] = _user.Id; 
+                myid = _user.Id.ToString();
+                
+                PageData["Access"] = "ReadOnly"; // They can't go into details
+                if(!_user.IsDBNull("PhoneBookDetails") && _user.GetBoolean("PhoneBookDetails") ){
+                    PageData["Access"] = "Full";
+                }
+                
+            }
+        }   
+    }
+}
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@("@")1.8.1/font/bootstrap-icons.css"/>
+    <script src="https://unpkg.com/htmx.org@("@")1.7.0"></script>
+    <script src="https://unpkg.com/hyperscript.org@("@")0.9.5"></script>
+    
+    <!-- Meta Tags required for	Progressive Web App NOT sure if I need these -->
+    <meta name="apple-mobile-web-app-status-bar" content="#white"/>
+    <meta name="theme-color" content="white"/>
+    
+    @*
+    <style type="text/css">
+    
+      body {
+        /* Disable long-press menu on iOS */
+        -webkit-touch-callout: none;
+      }
+      /* Hide the install button/instruction */
+      #install {
+        display: none;
+      }
+    
+    </style>
+    *@
+    
+    <!-- Manifest File link -->
+    <link rel="manifest" href="/phonebookajax?wantmanifest=yes"/>
+    
+    <!-- Because iOS uses this to detect PWA -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
+    <!-- iOS also ignores icons specified by the manifest. Instead, use these -->
+    <link rel="apple-touch-icon" href="https://www.brickriver.com/files/central_assets/phonebook/pbicon.png?width=192&height=192">
+    <link rel="apple-touch-icon" sizes="192x192" href="https://www.brickriver.com/files/central_assets/phonebook/pbicon.png?width=192&height=192">
+    <link rel="apple-touch-icon" sizes="256x256" href="https://www.brickriver.com/files/central_assets/phonebook/pbicon.png?width=256&height=256">
+    <link rel="apple-touch-icon" sizes="386x386" href="https://www.brickriver.com/files/central_assets/phonebook/pbicon.png?width=384&height=384">
+    <link rel="apple-touch-icon" sizes="512x512" href="https://www.brickriver.com/files/central_assets/phonebook/pbicon.png?width=512&height=512">
+    
+    <title>Phone Book | @EngineCore.CustomerContext.Current.ShortName.ToUpper()</title>
+    <style type="text/css">
+        @if(PageData["Access"]=="ReadOnly"){
+            @BRT.Raw(".detaillink{display:none;")
+        }
+    </style>
+    
+    @*
+    <script >
+        
+        const iOS = [
+            'iPad Simulator',
+            'iPhone Simulator',
+            'iPod Simulator',
+            'iPad',
+            'iPhone',
+            'iPod'
+          ].includes(navigator.platform)
+          // iPad on iOS 13 detection
+          || (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+        
+        var deferredPrompt
+        const button = document.getElementById('installButton')
+        button.style.display = "none"
+        
+        // If user is not on iOS, hide the install instructions for iOS
+        if (!iOS) {
+          document.getElementById('iOSUsers').style.display = 'none'
+        }
+        
+        // Capture the event right before the browser determines that this is an installable PWA
+        window.addEventListener('beforeinstallprompt', e => {
+        
+          // Don't show the "Add to Home Screen" prompt yet
+          e.preventDefault()
+          // Stash it to this variable
+          deferredPrompt = e
+        
+          // Show the button to install
+          button.style.display = "inline-block"
+        
+          // When the button is clicked...
+          button.addEventListener('click', e => {
+            e.preventDefault()
+        
+            // Show the prompt
+            deferredPrompt.prompt()
+        
+            // Check if user decides install the app.
+            deferredPrompt.userChoice.then(result => {
+              if (result.outcome === 'accepted') {
+                // If yes, get rid of the install instructions.
+                document.getElementById('install').style.display = 'none'
+                console.log("User installed the PWA")
+              } else {
+                console.log("User rejected the prompt")
+              }
+              deferredPrompt = null
+            })
+          })
+        })
+        
+    </script>
+    *@
+    
+  </head>
+  <body class="bg-white">
+        
+        @if(BRT.RenderContext.IsDesign) {
+        <p>Hi Content Manager Person :-)</p>
+        } else if (_user == null) {   
+            
+            <div class="container text-center mt-3" _="init add .form-control to <input[type=text]/> then add .form-control to <input[type=password]/> then add .btn to <input[type=submit]/> then add .btn-primary to <input[type=submit]/> then add .w-100 to <input[type=submit]/> then add .mt-3 to <input[type=submit]/> then add .form-check-input to <input[type=checkbox]/> then add .form-label to <label/>">
+                <div id="login">
+                        <div class="mb-3"><img src="https://www.brickriver.com/files/central_assets/phonebook/pbico.png?height=64"/></div>
+                    <div class="card card-body text-center shadow shadow-sm">
+                        <h4>BR Phone Book | @EngineCore.CustomerContext.Current.ShortName.ToUpper()</h4>
+                        <h5 class="bg-warning rounded p-1">Use your People login NOT your Console login <i class="bi bi-emoji-smile"></i></h5>
+                        @BRT.LoginForm(viewId:"People",condition:"<Eq FieldId=\"CanAccessPhoneBook\" Value=\"true\"/>",tokenName:"phonebook")
+                    </div>
+                    <p class="mt-3"><a class="btn btn-sm btn-light border" href="/phonebookajax?needhelp=yes">Forgot your password?</a></p>
+                    <p class="mt-3"><a href="https://help.brickriver.com/article/314-phone-book-module" target="_blank">Instructions for system admins</a></p>
+                </div>
+            </div>
+            
+                    
+        } else {
+               
+            string ch="on click " +
+            "set [@value] of #action to 'searchchurches' " +
+            "then set the value of #search to '' " +
+            "then call #search.focus() " +
+            "then put '' into #search-results " +
+            "then add .bg-danger to me " +
+            "then remove .bg-danger from .pickpeople";
+            
+            string ppl="on click " +
+            "set [@value] of #action to 'searchpeople' " +
+            "then set the value of #search to '' " +
+            "then call #search.focus() " +
+            "then put '' into #search-results " +
+            "then add .bg-danger to me " +
+            "then remove .bg-danger from .pickchurches"; 
+                
+            <script>
+                function mapsSelector(address) {
+                  if /* if we're on iOS, open in Apple Maps */
+                    ((navigator.platform.indexOf("iPhone") != -1) || 
+                     (navigator.platform.indexOf("iPod") != -1) || 
+                     (navigator.platform.indexOf("iPad") != -1))
+                    window.open("maps://maps.google.com/maps/dir/?api=1&destination=" + address);
+                
+                  else /* else use Google */
+                    window.open("https://maps.google.com/maps/dir/?api=1&destination=" + address);
+                  }
+            </script>
+            
+            <div class="sticky-top bg-primary p-2 border-bottom">
+                <form>
+                    <input type="search" id="search" name="search" placeholder="Begin typing to search" class="form-control" autofocus="true"
+                    hx-post="@BRT.SecureUrl("/phonebookajax")" 
+                    hx-trigger="keyup changed delay:500ms" 
+                    hx-target="#search-results" 
+                    hx-indicator=".htmx-indicator"
+                    hx-include="[name='action']"
+                    _="on keypress if event.which == '13' event.preventDefault() end"
+                    >
+                    <input name="action" value="searchpeople" type="hidden" id="action"/>
+                </form>
+                <div class="mt-2">
+                    @{
+                        var adapter = EngineAdapter.Create("Views");
+                        adapter.AddResultFields(new[] {"ViewId"});
+                        adapter.AddCondition("<Eq FieldId=\"ViewId\" Value=\"Churches\"/>");
+                        EngineRecordList item =  adapter.GetList(1,1,true);
+                    }
+                    @if (item.Count > 0) {
+                        <a href="#" class="bg-danger text-white pickpeople rounded py-1 px-2 text-decoration-none fw-bold" _="@ppl">PEOPLE</a>
+                        <a href="#" class="text-white me-2 pickchurches rounded py-1 px-2 text-decoration-none fw-bold" _="@ch">CHURCHES</a>
+                    }
+                    <a href="/phonebook?logout=logout" class="text-white float-end text-decoration-none"><small>log out</small></a>
+                     <span class="spinner-border spinner-border-sm text-light htmx-indicator" role="status" aria-hidden="true"></span>
+                </div>
+            </div>
+            <div class="container">    
+                <div id="search-results"></div>
+                
+                <div id="install" class="text-center mt-5">
+                    <h5>Add to your home screen</h5>
+                    <p><b>iPhone Safari</b>: Tap &quot;Share&quot; <img src="https://www.brickriver.com/files/central_assets/phonebook/iphoneshare.png?height=20"/>, then &quot;Add to Home Screen&quot;.</p>
+                    <p><b>Android</b>: Tap triple dots <i class="bi bi-three-dots-vertical"></i>, then &quot;Add to Home Screen&quot;.
+</p>
+                 </div>  
+       </div>
+        }
+        
+<div class="offcanvas offcanvas-end w-100" data-bs-scroll="true" data-bs-backdrop="true" tabindex="-1" id="snapshotmodal" aria-labelledby="snapshotmodal" _="on click elsewhere put 'loading' into #snapbody">
+  <div class="offcanvas-body">
+    <div id="snapbody"></div>
+  </div>
+</div>    
+    
+    
+  </body>
+</html>
+
