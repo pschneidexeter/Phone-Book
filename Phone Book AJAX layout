@@ -52,7 +52,6 @@
             
         </body>
     </html>
-    
 }
 
 
@@ -134,7 +133,6 @@
 }
 
 
-
 @if(BRT.RenderContext.IsDesign || BRT.RenderContext.IsSecureUrl) { // is it secure? If so, do the searching and most of the work
     string action = Request.Form["action"]; // what are we doing?
     
@@ -157,6 +155,9 @@
         case "searchchurches":
             @searchit(search,"Churches");
             break;
+        case "searchorgs":
+            @searchit(search,"Organizations");
+            break;
         case "dynamicvertical":
             @dynamicvertical(view,id);
             break;
@@ -178,73 +179,75 @@
                 
                 @for(var i = 0; i < @record.FieldCount; i++){
                     if(record.HasField(record.get_FieldMeta(i).Id) && !record.get_FieldMeta(i).Invisible && !record.IsDBNull(i)){
-                        <div class="py-1 px-3 rounded bg-white mb-0">
-                            <div>
-                                <small class="opacity-75 d-inline-block">@record.get_FieldMeta(i).FullName</small>
-                            </div>
-                            <div>
-                                @{
-                                    var fieldMeta = record.get_FieldMeta(i);
-                                    if (fieldMeta is EngineCore.Meta.CategoryMeta) {
-                                    
-                                        if(@fieldMeta.Name != "Type" ){
-                                            if(!record.IsDBNull(i)){
-                                                foreach(CategoryFieldItem catItem in @record.GetCategory(i)) {
-                                                    <span  id="br@(record.get_FieldMeta(i).Id)-@(record.Id)">
-                                                        @catItem.Label
-                                                    </span>
-                                                } 
+                        if(record.get_FieldMeta(i).Id!="Interactions" && record.get_FieldMeta(i).Id!="InternalNotes" && record.get_FieldMeta(i).Id!="SupplyNotes"){
+                            <div class="py-1 px-3 rounded bg-white mb-0">
+                                <div>
+                                    <small class="opacity-75 d-inline-block">@record.get_FieldMeta(i).FullName</small>
+                                </div>
+                                <div>
+                                    @{
+                                        var fieldMeta = record.get_FieldMeta(i);
+                                        if (fieldMeta is EngineCore.Meta.CategoryMeta) {
+                                        
+                                            if(@fieldMeta.Name != "Type" ){
+                                                if(!record.IsDBNull(i)){
+                                                    foreach(CategoryFieldItem catItem in @record.GetCategory(i)) {
+                                                        <span  id="br@(record.get_FieldMeta(i).Id)-@(record.Id)">
+                                                            @catItem.Label
+                                                        </span>
+                                                    } 
+                                                }
                                             }
-                                        }
-                                    
-                                    } else if (fieldMeta is EngineCore.Meta.RelationshipMeta) {
-                                        if(!record.IsDBNull(i)){ 
-                                            
-                                                var list = record.GetRecordList(i);
-                                                <div class="overflow-scroll">
-                                                    <table class="table table-bordered table-responsive">
-                                                        <thead>
-                                                            <tr>
-                                                                @for(int f = 0; f < list.FieldCount; f++) {
-                                                                    <th>@list.get_FieldMeta(f).Name</th>
+                                        
+                                        } else if (fieldMeta is EngineCore.Meta.RelationshipMeta) {
+                                            if(!record.IsDBNull(i)){ 
+                                                
+                                                    var list = record.GetRecordList(i);
+                                                    <div class="overflow-scroll">
+                                                        <table class="table table-bordered table-responsive">
+                                                            <thead>
+                                                                <tr>
+                                                                    @for(int f = 0; f < list.FieldCount; f++) {
+                                                                        <th>@list.get_FieldMeta(f).Name</th>
+                                                                    }
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                            @foreach(var row in list) {
+                                                                <tr>
+                                                                @for(int f = 0; f < row.FieldCount; f++){
+                                                                    <td>@row[f]</td>
                                                                 }
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody>
-                                                        @foreach(var row in list) {
-                                                            <tr>
-                                                            @for(int f = 0; f < row.FieldCount; f++){
-                                                                <td>@row[f]</td>
+                                                                </tr>
                                                             }
-                                                            </tr>
-                                                        }
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            
-                                        }
-                                    }
-                                    else if(fieldMeta is EngineCore.Meta.FileMeta){
-                                        if(record.GetFiles(i).Count>0) {                                                        
-                                            for(int f=0;f < @record.GetFiles(i).Count; f++) {
-                                            <a href="@record.GetFiles(i)[f].Url" target="_blank"><img src="@record.GetFiles(i)[f].Url?width=240" class="p-2 border" /></a>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                
                                             }
                                         }
-                                     }
-                                    else{
-                                        if(!record.IsDBNull(i)){
-                                            <div class="text-dark overflow-auto read-scroll mh-25" id="br@(record.get_FieldMeta(i).Id)-@(record.Id)">
-                                                <span class="@(record.get_FieldMeta(i).Important?"fw-bolder fs-3":"")">
-                                                    @BRT.Raw(record.get_FormattedValue(i))
-                                                </span>
-                                            </div>
+                                        else if(fieldMeta is EngineCore.Meta.FileMeta){
+                                            if(record.GetFiles(i).Count>0) {                                                        
+                                                for(int f=0;f < @record.GetFiles(i).Count; f++) {
+                                                <a href="@record.GetFiles(i)[f].Url" target="_blank"><img src="@record.GetFiles(i)[f].Url?width=240" class="p-2 border" /></a>
+                                                }
+                                            }
+                                         }
+                                        else{
+                                            if(!record.IsDBNull(i)){
+                                                <div class="text-dark overflow-auto read-scroll mh-25" id="br@(record.get_FieldMeta(i).Id)-@(record.Id)">
+                                                    <span class="@(record.get_FieldMeta(i).Important?"fw-bolder fs-3":"")">
+                                                        @BRT.Raw(record.get_FormattedValue(i))
+                                                    </span>
+                                                </div>
+                                            }
                                         }
                                     }
-                                }
+                                    
                                 
-                            
+                                </div>
                             </div>
-                        </div>
+                        }
                     }
                 }
             </div>
@@ -295,11 +298,19 @@
             search=search.Trim(); // get rid of spaces
             var adapter = EngineAdapter.Create("Contacts",area); // fire up the adapter for whichever view... variablized as area
             adapter.AddSearch(search); // whatever they are searching on, give it to the adapter and it searches whatever <SearchFields></SearchFields> are defined
+            adapter.AddSavedFilter("Visible");
             if(area=="Churches"){ // gotta set the right fields so it doesn't blow up.
                 adapter.AddResultFields(new[] {"PrimaryImage","Name","FirstName","Email","Phone1","Phone2","MailAddress1","MailAddress2","MailCity","MailState","MailZip","PhysAddress1","PhysAddress2","PhysCity","PhysState","PhysZip"});
                 if(EngineCore.CustomerContext.Current.Id!=350 && EngineCore.CustomerContext.Current.Id!=50){
                     adapter.AddSavedFilter("ExcludeClosed");   
                     adapter.AddSavedFilter("ExcludeMerged");
+                }
+            }
+            else if(area=="Organizations"){ // gotta set the right fields so it doesn't blow up.
+                adapter.AddResultFields(new[] {"PrimaryImage","Name","FirstName","Email","Phone1","Phone2","MailAddress1","MailAddress2","MailCity","MailState","MailZip"});
+                if(EngineCore.CustomerContext.Current.Id!=350 && EngineCore.CustomerContext.Current.Id!=50){
+                    //adapter.AddSavedFilter("ExcludeClosed");   
+                    //adapter.AddSavedFilter("ExcludeMerged");
                 }
             }
             else{ // same here.
@@ -339,7 +350,7 @@
                             <div class="fw-bold fs-5">
                                 
                                 <div>
-                                    @if(area=="Churches"){
+                                    @if(area=="Churches" || area=="Organizations"){
                                         if (!record.IsDBNull("FirstName") && EngineCore.CustomerContext.Current.Id!=350) {
                                             <span>@record["FirstName"]</span>
                                         }
@@ -392,7 +403,6 @@
                         @* Mobile Phone *@
                         @if (!record.IsDBNull("Phone2")) {
                             @SpitField(record.GetString("Phone2"), "cell", record.Id);
-                            phoneoffice = record.GetString("Phone2");
                             phonemobile = record.GetString("Phone2");
                         }
             
@@ -461,13 +471,13 @@
                                     <a href="mailto:@email" class="btn btn-primary mb-1"><i class="bi bi-envelope"></i> Email</a>
                                 }
                                 @if(phoneoffice!=""){
-                                    <a href="tel:@phoneoffice" class="btn btn-primary mb-1 "><i class="bi bi-telephone"></i> Office</a>
+                                    <a href="tel:@PhoneCallCleaner(phoneoffice)" class="btn btn-primary mb-1 "><i class="bi bi-telephone"></i> Office</a>
                                 }
                                 @if(phonemobile!=""){
-                                    <a href="tel:@phonemobile" class="btn btn-primary mb-1 "><i class="bi bi-telephone"></i> Cell</a>
+                                    <a href="tel:@PhoneCallCleaner(phonemobile)" class="btn btn-primary mb-1 "><i class="bi bi-telephone"></i> Cell</a>
                                 }
                                 @if(phonemobile!=""){
-                                    <a href="sms:@phonemobile" class="btn btn-primary mb-1 "><i class="bi bi-chat"></i> Text</a>
+                                    <a href="sms:@PhoneCallCleaner(phonemobile)" class="btn btn-primary mb-1 "><i class="bi bi-chat"></i> Text</a>
                                 }
                                 @if(address!=""){
                                     string mapaddress = System.Net.WebUtility.UrlEncode(address);
@@ -491,10 +501,15 @@
         }
         
         
-        
-        
-        
-        
+    }
+    
+    @helper PhoneCallCleaner(string phone){
+        string callNumber = System.Text.RegularExpressions.Regex.Replace(phone, "[^.0-9]", "");
+        if(callNumber.Substring(0,1) == "1"){
+            callNumber = callNumber.Substring(1,callNumber.Length-1);
+            callNumber = callNumber.Substring(0,10);
+        }
+        @callNumber
     }
     
 
