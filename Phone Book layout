@@ -171,6 +171,14 @@
             "then add .bg-danger to me " +
             "then remove .bg-danger from .pickpeople";
             
+            string org="on click " +
+            "set [@value] of #action to 'searchorgs' " +
+            "then set the value of #search to '' " +
+            "then call #search.focus() " +
+            "then put '' into #search-results " +
+            "then add .bg-danger to me " +
+            "then remove .bg-danger from .pickpeople";
+            
             string ppl="on click " +
             "set [@value] of #action to 'searchpeople' " +
             "then set the value of #search to '' " +
@@ -205,6 +213,7 @@
                     <input name="action" value="searchpeople" type="hidden" id="action"/>
                 </form>
                 <div class="mt-2">
+                    <a href="#" class="bg-danger text-white pickpeople rounded py-1 px-2 text-decoration-none fw-bold" _="@ppl">PEOPLE</a>
                     @{
                         var adapter = EngineAdapter.Create("Views");
                         adapter.AddResultFields(new[] {"ViewId"});
@@ -212,8 +221,17 @@
                         EngineRecordList item =  adapter.GetList(1,1,true);
                     }
                     @if (item.Count > 0) {
-                        <a href="#" class="bg-danger text-white pickpeople rounded py-1 px-2 text-decoration-none fw-bold" _="@ppl">PEOPLE</a>
+                        
                         <a href="#" class="text-white me-2 pickchurches rounded py-1 px-2 text-decoration-none fw-bold" _="@ch">CHURCHES</a>
+                    }
+                    @{
+                        var adapterOrgs = EngineAdapter.Create("Views");
+                        adapterOrgs.AddResultFields(new[] {"ViewId"});
+                        adapterOrgs.AddCondition("<Eq FieldId=\"ViewId\" Value=\"Organizations\"/>");
+                        EngineRecordList itemOrgs =  adapterOrgs.GetList(1,1,true);
+                    }
+                    @if (itemOrgs.Count > 0) {
+                        <a href="#" class="text-white me-2 pickorgs rounded py-1 px-2 text-decoration-none fw-bold" _="@org">ORGS</a>
                     }
                     <a href="/phonebook?logout=logout" class="text-white float-end text-decoration-none"><small>log out</small></a>
                      <span class="spinner-border spinner-border-sm text-light htmx-indicator" role="status" aria-hidden="true"></span>
